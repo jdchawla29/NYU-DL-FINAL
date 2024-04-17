@@ -12,7 +12,7 @@ class Params:
         self.val_batch_size = 128
         self.resolution = (160, 240)
         self.data_dir = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 2)[0], 'data')
-        self.max_epochs = 20
+        self.max_epochs = 100
         self.train_subset = 1
         self.val_subset = 1
         self.num_workers = 4
@@ -23,7 +23,7 @@ class Params:
         self.frame_dtype = torch.float32
         self.mask_dtype = torch.long
         self.checkpointing = True
-        self.checkpoint_path = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 1)[0], 'checkpoints')
+        self.checkpoint_path = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 1)[0], 'model_checkpoints')
         self.dpi = 300
 
 
