@@ -12,10 +12,18 @@ This will create a folder in the checkpoints folder (which will be created if it
 
 To perform inference on the hidden set (without predicting the 22nd frame, simply predicting the 11th frame's mask) using this UNet model, run the train.py file first, then find the path for "best_model.pth" in the "checkpoints" folder which is located as mentioned above.
 
-To run the inference, simply run
+To run the inference using only 11th frame on hidden set, simply run
 
 ```
-python unet_only_inference.py --model_path [/path/to/best_model.pth]
+python hidden_set_inference.py --model_path [/path/to/best__segmentation_model.pth]
+```
+
+and make sure you have your hidden data located under NYU-DL-FINAL/data/hidden
+
+To run the inference using reconstructed 22nd frames, simply run
+
+```
+python hidden_set_inference.py --model_path [/path/to/best__segmentation_model.pth] --reconstructed_data_dir [/path/to/reconstructed/22nd/frames]
 ```
 
 This will add a folder called hidden_set_masks to the checkpoints folder where you got the best_model.pth from, which will contain 5 example images (the image + the corresponding predicted mask). It will also have a file called all_hidden_set_masks.tensor which contains all 5000 predicted segmentation masks.

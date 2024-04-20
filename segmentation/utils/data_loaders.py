@@ -113,53 +113,15 @@ class VideoSegmentationData(Dataset):
         
         plt.show()
 
-
-def get_video_segmentation_loaders(params = Params()):
-    """
-    Returns the training and validation data loaders for the video segmentation task.
-    
-    Args:
-        data_dir (str): The directory where the data is stored.
-        batch_size (int): The batch size for the data loaders.
-        num_workers (int): The number of workers to use for loading the data.
-        training_subset (float): The ratio of the training_subset data to use. Must be between 0 and 1.
-        val_subset (float): The ratio of the validation data to use. Must be between 0 and 1.
-        random_state (int): The random seed to use for subsetting the train/val data.
-        pin_memory (bool): Whether to pin memory for faster GPU transfer.
-        
-    Returns:
-        DataLoader: The training data loader.
-        DataLoader: The validation data loader.
-    """
-
-    data_dir = params.data_dir
-    batch_size = params.batch_size
-    num_workers = params.num_workers
-    training_subset = params.train_subset
-    val_subset = params.val_subset
-    pin_memory = params.pin_memory
-
-    train_transforms = TrainSegmentationTransforms()
-    val_transforms = ValSegmentationTransforms()
-
-    train_data = VideoSegmentationData(data_dir, 'train', params, train_transforms, training_subset)
-    val_data = VideoSegmentationData(data_dir, 'val', params, val_transforms, val_subset)
-
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin_memory)
-    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
-
-    return train_loader, val_loader
-
 class HiddenDataSet(Dataset):
     """
     Returns the 11 frames for each video in the hidden set.
     """
-    def __init__(self, data_dir, params = Params(), transforms = None):
+    def __init__(self, data_dir, params = Params(), transforms = None, reconstructed_img_dir = False):
         self.root_dir = os.path.join(data_dir, 'hidden')
         self.transforms = transforms
         self.params = params
-
-        self.random_state = params.random_state
+        self.reconstructed_img_dir = reconstructed_img_dir
 
         self._load_data()
 
@@ -171,17 +133,27 @@ class HiddenDataSet(Dataset):
 
         video_folders = sorted(os.listdir(self.root_dir))
         
-        for video_folder in video_folders:
-            
-            video_folder_path = os.path.join(self.root_dir, video_folder)
-            
-            frames = []
-            # Read video frames and masks
-            for i in range(11):
-                frame_path = os.path.join(video_folder_path, f'image_{i}.png')
-                frames.append(frame_path)
-            
-            self.data.append(frames)
+        if self.reconstructed_img_dir is not None:
+            # If the reconstructed images are available, use them
+            self.data = sorted([[os.path.join(self.reconstructed_img_dir, file)] for file in os.listdir(self.reconstructed_img_dir) if file.endswith(".png")])  
+
+            # also turn off the transforms
+            self.transforms = None
+        
+        else:
+            range_start = 21
+            range_end = 22
+            for video_folder in video_folders:
+                
+                video_folder_path = os.path.join(self.root_dir, video_folder)
+                
+                frames = []
+                # Read video frames and masks
+                for i in range(range_start, range_end):
+                    frame_path = os.path.join(video_folder_path, f'image_{i}.png')
+                    frames.append(frame_path)
+                
+                self.data.append(frames)
 
     def __len__(self):
         return len(self.data)
@@ -228,13 +200,49 @@ class HiddenDataSet(Dataset):
         
         plt.show()
 
-def get_hidden_set_loader(params = Params()):
+
+
+def get_video_segmentation_loaders(params = Params()):
+    """
+    Returns the training and validation data loaders for the video segmentation task.
+    
+    Args (within the passed params object):
+        data_dir (str): The directory where the data is stored.
+        batch_size (int): The batch size for the data loaders.
+        num_workers (int): The number of workers to use for loading the data.
+        training_subset (float): The ratio of the training_subset data to use. Must be between 0 and 1.
+        val_subset (float): The ratio of the validation data to use. Must be between 0 and 1.
+        pin_memory (bool): Whether to pin memory for faster GPU transfer.
+        
+    Returns:
+        DataLoader: The training data loader.
+        DataLoader: The validation data loader.
+    """
+
+    data_dir = params.data_dir
+    batch_size = params.batch_size
+    num_workers = params.num_workers
+    training_subset = params.train_subset
+    val_subset = params.val_subset
+    pin_memory = params.pin_memory
+
+    train_transforms = TrainSegmentationTransforms()
+    val_transforms = ValSegmentationTransforms()
+
+    train_data = VideoSegmentationData(data_dir, 'train', params, train_transforms, training_subset)
+    val_data = VideoSegmentationData(data_dir, 'val', params, val_transforms, val_subset)
+
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=pin_memory)
+    val_loader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
+
+    return train_loader, val_loader
+
+def get_hidden_set_loader(params = Params(), reconstructed_img_dir = None):
     """
     Returns the data loader for the hidden set.
     
-    Args:
-        hidden_set_path (str): The path to the hidden set.
-        batch_size (int): The batch size for the data loader.
+    Args (within the passed params object):
+        data_dir (str): The directory where the data is stored.
         num_workers (int): The number of workers to use for loading the data.
         pin_memory (bool): Whether to pin memory for faster GPU transfer.
         
@@ -242,9 +250,13 @@ def get_hidden_set_loader(params = Params()):
         DataLoader: The hidden set data loader.
     """
 
+    data_dir = params.data_dir
+    num_workers = params.num_workers
+    pin_memory = params.pin_memory
+
     hidden_set_transforms = HiddenSetTransforms()
 
-    hidden_set_data = HiddenDataSet(params.data_dir, params, hidden_set_transforms)
-    hidden_set_loader = torch.utils.data.DataLoader(hidden_set_data, batch_size=1, shuffle=False, num_workers=0, pin_memory=False)
+    hidden_set_data = HiddenDataSet(data_dir, params, hidden_set_transforms, reconstructed_img_dir)
+    hidden_set_loader = torch.utils.data.DataLoader(hidden_set_data, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
 
     return hidden_set_loader
