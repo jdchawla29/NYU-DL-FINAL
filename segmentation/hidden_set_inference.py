@@ -37,7 +37,7 @@ def model_inference(model, data_loader, device, params = Params()):
             # resize the mask to the original resolution of 160x240
             mask_pred_argmax = v2.Resize((160, 240), interpolation=InterpolationMode.BICUBIC)(mask_pred_argmax)
 
-        if i % 1 == 0: # visualize every 1000th mask
+        if i % 1000 == 0: # visualize every 1000th mask
             visualize_predicted_example(image[0].detach().cpu(), None, mask_pred_argmax.detach().cpu(), f"Predicted Mask for Hidden Set Video {i} based on Frame {11} only", os.path.join(params.hidden_set_mask_dir, f"hidden_{i}.png"), params)
 
         masks.append(mask_pred_argmax.squeeze(0).detach().cpu())
