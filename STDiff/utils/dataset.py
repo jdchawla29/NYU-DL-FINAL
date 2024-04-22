@@ -1,26 +1,17 @@
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader, ConcatDataset, random_split
-from torch import Tensor
 import pytorch_lightning as pl
 
 import numpy as np
 from PIL import Image
 from pathlib import Path
 import os
-import copy
 from typing import List
-from tqdm import tqdm
-import random
 from typing import Optional
-from itertools import groupby
-from operator import itemgetter
 from functools import partial
 import random
 from einops import rearrange
-
-import cv2
-
 
 class LitDataModule(pl.LightningDataModule):
     def __init__(self, cfg):
@@ -51,12 +42,12 @@ class LitDataModule(pl.LightningDataModule):
         self.train_set = None
         self.test_set = None
 
-        if stage in ('train',None):
-            TrainData = MyDataset(Path(self.cfg.Dataset.dir), transform=self.train_transform, train=True, num_observed_frames=self.cfg.Dataset.num_observed_frames, num_predict_frames=self.cfg.Dataset.num_predict_frames)
+        if stage=='train':
+            TrainData = MyDataset(Path(self.cfg.Dataset.dir), transform=self.train_transform, num_observed_frames=self.cfg.Dataset.num_observed_frames, num_predict_frames=self.cfg.Dataset.num_predict_frames)
             self.train_set = TrainData()
 
-        if stage in ('test','predict'):
-            TestData = MyDataset(Path(self.cfg.Dataset.dir), transform=self.test_transform, train=False, num_observed_frames=self.cfg.Dataset.test_num_observed_frames, num_predict_frames=self.cfg.Dataset.test_num_predict_frames)
+        if stage=='inference':
+            TestData = MyDataset(Path(self.cfg.Dataset.dir), transform=self.test_transform, num_observed_frames=self.cfg.Dataset.test_num_observed_frames, num_predict_frames=self.cfg.Dataset.test_num_predict_frames)
             self.test_set = TestData()
 
     def train_dataloader(self):

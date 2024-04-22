@@ -16,7 +16,6 @@ import argparse
 import diffusers
 from diffusers import DDPMScheduler
 from diffusers.optimization import get_scheduler
-from diffusers.training_utils import EMAModel
 from diffusers.utils import check_min_version, is_accelerate_version, is_tensorboard_available
 
 from hydra import compose, initialize
@@ -34,7 +33,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=globals()['__doc__'])
     parser.add_argument('--config', type=str, required=True, help='Path to configuration file')
     args = parser.parse_args()
-    return args.train_config
+    return args.config
 
 def main(cfg : DictConfig) -> None:
     logging_dir = os.path.join(cfg.Env.output_dir, 'logs')

@@ -18,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=globals()['__doc__'])
     parser.add_argument('--config', type=str, required=True, help='Path to configuration file')
     args = parser.parse_args()
-    return args.test_config
+    return args.config
 
 def main(cfg : DictConfig) -> None:
     accelerator = Accelerator()
