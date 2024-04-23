@@ -23,8 +23,8 @@ class LitDataModule(pl.LightningDataModule):
 
         self.norm_transform = lambda x: x * 2. - 1.
 
-        self.train_transform = transforms.Compose([VidPad((0,40,0,40)), VidResize((self.img_size,self.img_size)), VidToTensor(), self.norm_transform])
-        self.test_transform = transforms.Compose([VidPad((0,40,0,40)), VidResize((self.img_size,self.img_size)), VidToTensor(), self.norm_transform])
+        self.train_transform = transforms.Compose([VidResize((80,120)), VidPad((4,24,4,24)), VidToTensor(), self.norm_transform]) # Original size is 160x240, changing to 128x128
+        self.test_transform = transforms.Compose([VidResize((80,120)), VidPad((4,24,4,24)), VidToTensor(), self.norm_transform])
         
         o_resize = None
         p_resize = None
