@@ -8,8 +8,8 @@ class Params:
     """
     def __init__(self):
         self.lr = 0.0004
-        self.batch_size = 128
-        self.val_batch_size = 128
+        self.batch_size = 64
+        self.val_batch_size = 64
         self.resolution = (160, 240)
         self.data_dir = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 2)[0], 'data')
         self.max_epochs = 100

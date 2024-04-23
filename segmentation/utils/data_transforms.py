@@ -39,12 +39,13 @@ class TrainSegmentationTransforms:
         image_transforms = v2.Compose([
             v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1]
             # v2.Lambda(lambda X: 2 * X - 1.0),  # rescale to [-1, 1]
-            v2.Resize(params.resolution), # Resize the image to the specified resolution
+            v2.Resize(params.resolution, interpolation=InterpolationMode.BICUBIC), # Resize the image to the specified resolution
+            # v2.Normalize(mean=[0.50613105, 0.50451115, 0.50091129], std=[0.05694459, 0.05666152, 0.06111675]) # <----------------- should be based on train set stats
         ])
 
         mask_transforms = v2.Compose([
             v2.ToDtype(params.mask_dtype), # Convert the mask to a PyTorch Tensor
-            v2.Resize(params.resolution, interpolation=InterpolationMode.NEAREST), # Resize the mask to the specified resolution
+            v2.Resize(params.resolution, interpolation=InterpolationMode.NEAREST_EXACT), # Resize the mask to the specified resolution
         ])
 
         image = image_transforms(image)
@@ -70,12 +71,13 @@ class ValSegmentationTransforms:
         image_transforms = v2.Compose([
             v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1]
             # v2.Lambda(lambda X: 2 * X - 1.0),  # rescale to [-1, 1]
-            v2.Resize(params.resolution), # Resize the image to the specified resolution
+            v2.Resize(params.resolution, interpolation=InterpolationMode.BICUBIC), # Resize the image to the specified resolution
+            # v2.Normalize(mean=[0.50613105, 0.50451115, 0.50091129], std=[0.05694459, 0.05666152, 0.06111675]) # <----------------- should be based on val set stats
         ])
 
         mask_transforms = v2.Compose([
             v2.ToDtype(params.mask_dtype), # Convert the mask to a PyTorch Tensor
-            v2.Resize(params.resolution, interpolation=InterpolationMode.NEAREST), # Resize the mask to the specified resolution
+            v2.Resize(params.resolution, interpolation=InterpolationMode.NEAREST_EXACT), # Resize the mask to the specified resolution
         ])
 
         image = image_transforms(image)
@@ -83,7 +85,6 @@ class ValSegmentationTransforms:
 
         return image, mask
     
-
 class HiddenSetTransforms:
     """
     Class for applying transforms to the hidden set data.
@@ -101,7 +102,7 @@ class HiddenSetTransforms:
         image_transforms = v2.Compose([
             v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1]
             # v2.Lambda(lambda X: 2 * X - 1.0),  # rescale to [-1, 1]
-            v2.Resize(params.resolution), # Resize the image to the specified resolution
+            # v2.Resize(params.resolution, interpolation=InterpolationMode.BICUBIC), # Resize the image to the specified resolution
         ])
 
 
