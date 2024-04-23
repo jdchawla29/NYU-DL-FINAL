@@ -11,7 +11,7 @@ class Params:
         self.batch_size = 64
         self.val_batch_size = 64
         self.resolution = (160, 240)
-        self.data_dir = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 2)[0], 'data')
+        self.data_dir = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 2)[0], 'dataset')
         self.max_epochs = 100
         self.train_subset = 1
         self.val_subset = 1
