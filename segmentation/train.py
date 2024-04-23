@@ -70,7 +70,7 @@ def calculate_dice_loss(pred_masks, true_masks, num_classes):
     return dice_loss  
 
 @torch.inference_mode()
-def validate(model, val_loader, criterion, device, IoU, params = Params()):
+def validate(model, val_loader, criterion, device, params = Params()):
 
     print("\nValidating...\n")
 
