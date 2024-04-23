@@ -1,23 +1,23 @@
 Env:
     output_dir: '/teamspace/studios/this_studio/out/trained' # output directory
     logger: 'tensorboard'
-    resume_ckpt: null
-    stdiff_init_ckpt: null
+    resume_ckpt: '/teamspace/studios/this_studio/stdiff_80_epochs/checkpoint-52000'
+    stdiff_init_ckpt: '/teamspace/studios/this_studio/stdiff_80_epochs/stdiff'
     
 Dataset:
     name: 'Object-Data'
-    dir: '/teamspace/studios/this_studio/dataset/val' # path to the dataset
-    stage: 'inferen' # 'train' or 'inference'
-    batch_size: 1
+    dir: '/teamspace/studios/this_studio/dataset/train' # path to the dataset
+    stage: 'inference' # 'train' or 'inference'
+    batch_size: 2 # 64 for testing
     num_workers: 8
     num_channels: 3
     image_size: 64
     num_observed_frames: 11
     num_predict_frames: 11
     test_num_observed_frames: 11
-    test_num_predict_frames: 0 # 0 for prediction
-    rand_Tp: null
-    rand_predict: False
+    test_num_predict_frames: 11 # 0 for prediction
+    rand_Tp: None # 3 for training
+    rand_predict: False # True for training 
 
 STDiff:
     Diffusion:
@@ -70,15 +70,15 @@ STDiff:
                 norm: null
 
 Training:
-    epochs: 60
-    save_images_epochs: 4
-    save_model_epochs: 4
-    checkpointing_steps: 100 # number of steps to save a resuming checkpoint
+    epochs: 100
+    save_images_epochs: 1
+    save_model_epochs: 1
+    checkpointing_steps: 500 # number of steps to save a resuming checkpoint
 
     gradient_accumulation_steps: 1 # 4 for 128 resolution, 4 GPU training
 
 TestCfg:
-    ckpt_path: '/teamspace/studios/this_studio/STDiff_ckpts'
+    ckpt_path: '/teamspace/studios/this_studio/out/trained'
     test_results_path: '/teamspace/studios/this_studio/out/results'
     scheduler: 
         sample_steps: 100
