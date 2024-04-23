@@ -1,4 +1,6 @@
 import os
+import re
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -134,10 +136,21 @@ class HiddenDataSet(Dataset):
         video_folders = sorted(os.listdir(self.root_dir))
         
         if self.reconstructed_img_dir is not None:
-            # If the reconstructed images are available, use them
-            self.data = sorted([[os.path.join(self.reconstructed_img_dir, file)] for file in os.listdir(self.reconstructed_img_dir) if file.endswith(".png")])  
+            # Retrieve all folders starting with 'Pred_'
+            folders = sorted(glob.glob(os.path.join(self.reconstructed_img_dir, 'Pred_*')), key=lambda x: int(x.split('_')[-1]))
 
-            # also turn off the transforms
+            # List to hold file paths
+            all_images = []
+
+            # Loop through each folder
+            for folder in folders:
+                # Get all image files in the current folder, sorted numerically
+                images = sorted(glob.glob(os.path.join(folder, 'img_*.png')), key=lambda x: int(x.split('_')[-1].split('.')[0]))
+                all_images.extend(images)
+
+            self.data = [[image] for image in all_images]
+
+            # turn off the transforms -> should probably change this code at some point
             self.transforms = None
         
         else:
@@ -169,36 +182,9 @@ class HiddenDataSet(Dataset):
             images = [v2.ToDtype(torch.float32, scale=True)(image) for image in images]
 
         # convert the list of tensors to a single tensor
-        images = torch.stack(images) # [11, C, H, W]
+        images = torch.stack(images) # [1, C, H, W]
 
         return images
-
-    def visualize_video(self, idx):
-        """
-        Visualize a specific video (11 frames) from the hidden set.
-        
-        Args:
-            idx (int): The index of the example to visualize.
-        """
-
-        images = self.__getitem__(idx)
-
-        images = list(torch.unbind(images, dim=0))
-
-        print('Image 0 shape:', images[0].shape)
-
-        # Convert the torch.tensor image to PIL for easy visualization
-        images = [to_pil_image(image) for image in images]
-
-        # Plotting
-        _, ax = plt.subplots(1, 11, figsize=(12, 6))
-        
-        for i, image in enumerate(images):
-            ax[i].imshow(image)
-            ax[i].set_title(f'Hidden Video {idx}: Frame {i}')
-            ax[i].axis('off')
-        
-        plt.show()
 
 
 

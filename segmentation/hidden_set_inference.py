@@ -25,8 +25,10 @@ def model_inference(model, data_loader, device, params = Params()):
         image = images[:, -1, :, :, :].to(device) # only use the last available frame for inference
 
         if params.reconstructed: # this means the image will need to be resized to (240, 240) and then cropped to (160, 240)
-            image = v2.Resize((240, 240), interpolation=InterpolationMode.BICUBIC)(image.squeeze(0))
-            image = v2.CenterCrop((160, 240))(image)
+            image = v2.CenterCrop((42, 64))(image.squeeze(0)) # this assumes the image is a 64 x 64 image
+            image = v2.Resize((160, 240), interpolation=v2.InterpolationMode.BICUBIC)(image)
+            # image = v2.Resize((240, 240), interpolation=InterpolationMode.BICUBIC)(image.squeeze(0))
+            # image = v2.CenterCrop((160, 240))(image)
             image = image.unsqueeze(0) # add back the batch dimension
 
         predicted_masks = model(image)
@@ -38,13 +40,13 @@ def model_inference(model, data_loader, device, params = Params()):
             mask_pred_argmax = v2.Resize((160, 240), interpolation=InterpolationMode.BICUBIC)(mask_pred_argmax)
 
         if i % 1000 == 0: # visualize every 1000th mask
-            visualize_predicted_example(image[0].detach().cpu(), None, mask_pred_argmax.detach().cpu(), f"Predicted Mask for Hidden Set Video {i} based on Frame {11} only", os.path.join(params.hidden_set_mask_dir, f"hidden_{i}.png"), params)
+            visualize_predicted_example(image[0].detach().cpu(), None, mask_pred_argmax.detach().cpu(), f"Predicted Mask for Hidden Set Video {i}", os.path.join(params.hidden_set_mask_dir, f"hidden_{i}.png"), params)
 
         masks.append(mask_pred_argmax.squeeze(0).detach().cpu())
 
     masks = torch.stack(masks)
 
-    assert masks.shape == (len(data_loader), 160, 240), f"Expected masks to have shape (5000, 160, 240), but got {masks.shape}"
+    assert masks.shape == (5000, 160, 240), f"Expected masks to have shape (5000, 160, 240), but got {masks.shape}"
 
     # save the masks to a file
     torch.save(masks, os.path.join(params.hidden_set_mask_dir, 'all_hidden_set_masks.tensor'))
