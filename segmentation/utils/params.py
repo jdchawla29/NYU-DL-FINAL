@@ -23,7 +23,7 @@ class Params:
         self.frame_dtype = torch.float32
         self.mask_dtype = torch.long
         self.checkpointing = True
-        self.checkpoint_path = os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 1)[0], 'model_checkpoints')
+        self.checkpoint_path = print(os.path.join(str(pathlib.Path(__file__).parent.resolve()).rsplit('/', 3)[0], 'segmentation_checkpoints')) # should be right outside the NYU-DL-FINAL folder
         self.dpi = 300
 
 
