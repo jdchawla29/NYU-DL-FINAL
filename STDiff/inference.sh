@@ -1,0 +1,1 @@
+accelerate launch --config_file ./configs/accelerate_config.yaml inference.py --config ./configs/config.yaml
