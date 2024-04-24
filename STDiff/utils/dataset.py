@@ -83,7 +83,7 @@ class MyDataset(object):
 
         self.path = Path(dir).absolute()
 
-        frame_folders = [self.path.joinpath(s) for s in os.listdir(self.path)]
+        frame_folders = [self.path.joinpath(s) for s in sorted(os.listdir(self.path))]
 
         self.clips = self.__getClips__(frame_folders)
 

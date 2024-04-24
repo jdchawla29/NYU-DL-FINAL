@@ -1,17 +1,17 @@
 Env:
     output_dir: '/teamspace/studios/this_studio/out/trained' # output directory
     logger: 'tensorboard'
-    resume_ckpt: '/teamspace/studios/this_studio/stdiff_80_epochs/checkpoint-52000'
-    stdiff_init_ckpt: '/teamspace/studios/this_studio/stdiff_80_epochs/stdiff'
+    resume_ckpt: '/teamspace/studios/this_studio/out/trained/checkpoint-45000'
+    stdiff_init_ckpt: '/teamspace/studios/this_studio/trained/stdiff'
     
 Dataset:
     name: 'Object-Data'
-    dir: '/teamspace/studios/this_studio/dataset/train' # path to the dataset
+    dir: '/teamspace/studios/this_studio/NYU-DL-FINAL/dataset/val' # path to the dataset
     stage: 'inference' # 'train' or 'inference'
     batch_size: 2 # 64 for testing
     num_workers: 8
     num_channels: 3
-    image_size: 64
+    image_size: 128
     num_observed_frames: 11
     num_predict_frames: 11
     test_num_observed_frames: 11
@@ -26,29 +26,29 @@ STDiff:
         ddpm_beta_schedule: 'linear'
 
         unet_config:
-            sample_size: 64
+            sample_size: 128
             in_channels: 6
             out_channels: 3
             m_channels: 256
             layers_per_block: 2
             #config for resolution 128
-            # block_out_channels: [256, 256, 512, 768, 1024]
-            # down_block_types: ["DownBlock2D","DownBlock2D","DownBlock2D", "AttnDownBlock2D", "AttnDownBlock2D"]
-            # up_block_types: ["AttnUpBlock2D", "AttnUpBlock2D","UpBlock2D", "UpBlock2D", "UpBlock2D"]
-            # attention_head_dim: [null, null, null, 192, 256]
+            block_out_channels: [256, 256, 512, 768, 1024]
+            down_block_types: ["DownBlock2D","DownBlock2D","DownBlock2D", "AttnDownBlock2D", "AttnDownBlock2D"]
+            up_block_types: ["AttnUpBlock2D", "AttnUpBlock2D","UpBlock2D", "UpBlock2D", "UpBlock2D"]
+            attention_head_dim: [null, null, null, 192, 256]
             
             # config for resolution 64
-            block_out_channels: [128, 256, 256, 512, 512]
-            down_block_types: ["DownBlock2D","AttnDownBlock2D","AttnDownBlock2D", "AttnDownBlock2D", "AttnDownBlock2D"]
-            up_block_types: ["AttnUpBlock2D", "AttnUpBlock2D","AttnUpBlock2D", "AttnUpBlock2D", "UpBlock2D"]
-            attention_head_dim: [null, 128, 128, 128, 128]
+            # block_out_channels: [128, 256, 256, 512, 512]
+            # down_block_types: ["DownBlock2D","AttnDownBlock2D","AttnDownBlock2D", "AttnDownBlock2D", "AttnDownBlock2D"]
+            # up_block_types: ["AttnUpBlock2D", "AttnUpBlock2D","AttnUpBlock2D", "AttnUpBlock2D", "UpBlock2D"]
+            # attention_head_dim: [null, 128, 128, 128, 128]
 
     DiffNet:
         autoregressive: True
         super_res_training: False
         MotionEncoder:
             learn_diff_image: True
-            image_size: 64
+            image_size: 128
             in_channels: 3
             model_channels: 64
             n_downs: 2
