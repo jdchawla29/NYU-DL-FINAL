@@ -20,16 +20,9 @@ def model_inference(model, data_loader, device, params = Params()):
 
     masks = []
 
-    for i, images in enumerate(tqdm(data_loader, desc='Hidden Set Inference')):
+    for i, image in enumerate(tqdm(data_loader, desc='Hidden Set Inference')):
 
-        image = images[:, -1, :, :, :].to(device) # only use the last available frame for inference
-
-        if params.reconstructed: # this means the image will need to be resized to (240, 240) and then cropped to (160, 240)
-            image = v2.CenterCrop((42, 64))(image.squeeze(0)) # this assumes the image is a 64 x 64 image
-            image = v2.Resize((160, 240), interpolation=v2.InterpolationMode.BICUBIC)(image)
-            # image = v2.Resize((240, 240), interpolation=InterpolationMode.BICUBIC)(image.squeeze(0))
-            # image = v2.CenterCrop((160, 240))(image)
-            image = image.unsqueeze(0) # add back the batch dimension
+        image = image.to(device)
 
         predicted_masks = model(image)
 
@@ -56,12 +49,12 @@ def model_inference(model, data_loader, device, params = Params()):
 def main():
     parser = argparse.ArgumentParser(description='Running segmentation mask inference on the hidden set using only the 11th frame')
     parser.add_argument('--model_path', help = 'Path to the saved torch model to use for inference', required = True, type = str)
-    parser.add_argument('--reconstructed_data_dir', help = 'Path to the reconstructed data directory', required = False, type = str, default=None)
+    parser.add_argument('--reconstructed_img_dir', help = 'Path to the reconstructed data directory', required = False, type = str, default=None)
     
     args = parser.parse_args()
 
     model_path = args.model_path
-    reconstructed_data_dir = args.reconstructed_data_dir
+    reconstructed_img_dir = args.reconstructed_img_dir
 
     # Load the parameters
     params = Params()
@@ -77,10 +70,10 @@ def main():
     # Load the unet model
     inference_model = torch.load(model_path)
 
-    params.reconstructed = True if reconstructed_data_dir is not None else False
+    params.reconstructed_img_dir = reconstructed_img_dir
 
     # Load the data
-    hidden_set_loader = get_hidden_set_loader(params, reconstructed_data_dir)
+    hidden_set_loader = get_hidden_set_loader(params)
 
     # Test the model on the hidden set
     model_inference(inference_model, hidden_set_loader, device, params)

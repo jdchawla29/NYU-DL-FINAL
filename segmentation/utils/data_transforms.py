@@ -90,7 +90,7 @@ class HiddenSetTransforms:
     Class for applying transforms to the hidden set data.
     """
 
-    def __call__(self, images, params = Params()):
+    def __call__(self, image, params = Params()):
         """
         Apply transforms to the image and mask.
 
@@ -99,13 +99,20 @@ class HiddenSetTransforms:
             params (Params): Parameters for the transforms.
         """
 
-        image_transforms = v2.Compose([
-            v2.CenterCrop((80,120)), 
-            v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1] since thats what the model expects
-            v2.Resize((160, 240),interpolation=v2.InterpolationMode.BICUBIC,antialias=True) 
-        ])
+
+        if params.reconstructed_img_dir is not None:
+            image_transforms = v2.Compose([
+                v2.CenterCrop((80,120)), 
+                v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1] since thats what the model expects
+                v2.Resize((160, 240),interpolation=v2.InterpolationMode.BICUBIC,antialias=True) 
+            ])
+        else:
+            image_transforms = v2.Compose([
+                v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1] since thats what the model expects
+                v2.Resize((160, 240),interpolation=v2.InterpolationMode.BICUBIC,antialias=True) 
+            ])
 
 
-        images = [image_transforms(image) for image in images]
+        image = image_transforms(image)
 
-        return images
+        return image

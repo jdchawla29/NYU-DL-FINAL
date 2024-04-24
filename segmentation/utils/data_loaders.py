@@ -122,9 +122,12 @@ class VideoSegmentationData(Dataset):
 
 class HiddenDataSet(Dataset):
     """
-    Returns the 11 frames for each video in the hidden set.
+    If params.reconstructed_img_dir is a directory, this class:
+        A) Returns the predicted 22nd frame for each video. Assumes output from STDiff where there are folders named 'Pred_0', 'Pred_1', representing batches of predicted frames.
+    Otherwise, we assume that we aren't using the reconstructed 22nd frames and this class:
+        B) Returns the 11th frame for each video in the hidden set.
     """
-    def __init__(self, data_dir, params = Params(), transforms = None, reconstructed_img_dir = False):
+    def __init__(self, data_dir, reconstructed_img_dir, params = Params(), transforms = None):
         self.root_dir = os.path.join(data_dir, 'hidden')
         self.transforms = transforms
         self.params = params
@@ -134,13 +137,23 @@ class HiddenDataSet(Dataset):
 
     def _load_data(self):
         
-        print(f"Loading hidden data from {self.root_dir}")
+        if self.reconstructed_img_dir is None:
+            self.data = []
 
-        self.data = []
+            video_folders = sorted(os.listdir(self.root_dir))
 
-        video_folders = sorted(os.listdir(self.root_dir))
-        
-        if self.reconstructed_img_dir is not None:
+            for video_folder in video_folders:
+                
+                video_folder_path = os.path.join(self.root_dir, video_folder)
+                frame_path = os.path.join(video_folder_path, f'image_10.png')
+                ``
+                self.data.append(frame_path)
+        else:
+
+            print(f"Loading hidden data from {self.reconstructed_img_dir}")
+
+            self.data = []
+            
             # Retrieve all folders starting with 'Pred_'
             folders = sorted(glob.glob(os.path.join(self.reconstructed_img_dir, 'Pred_*')), key=lambda x: int(x.split('_')[-1]))
 
@@ -153,40 +166,22 @@ class HiddenDataSet(Dataset):
                 images = sorted(glob.glob(os.path.join(folder, 'img_*.png')), key=lambda x: int(x.split('_')[-1].split('.')[0]))
                 all_images.extend(images)
 
-            self.data = [[image] for image in all_images]
-        
-        else:
-            range_start = 21
-            range_end = 22
-            for video_folder in video_folders:
-                
-                video_folder_path = os.path.join(self.root_dir, video_folder)
-                
-                frames = []
-                # Read video frames and masks
-                for i in range(range_start, range_end):
-                    frame_path = os.path.join(video_folder_path, f'image_{i}.png')
-                    frames.append(frame_path)
-                
-                self.data.append(frames)
+            self.data = all_images
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        images = self.data[idx]
+        image = self.data[idx]
 
-        images = [read_image(image) for image in images] # read_image returns a tensor of shape [C, H, W]
+        image = read_image(image) # read_image returns a tensor of shape [C, H, W]
 
         if self.transforms is not None:
-            images = self.transforms(images, self.params)
+            image = self.transforms(image, self.params)
         else:
-            images = [v2.ToDtype(torch.float32, scale=True)(image) for image in images]
+            image = v2.ToDtype(torch.float32, scale=True)(image)
 
-        # convert the list of tensors to a single tensor
-        images = torch.stack(images) # [1, C, H, W]
-
-        return images
+        return image
 
     def visualize_example(self, idx):
         """
@@ -196,10 +191,7 @@ class HiddenDataSet(Dataset):
             idx (int): The index of the example to visualize.
         """
 
-        image = self.__getitem__(idx)[0] # [1, C, H, W] -> [C, H, W]
-
-        # print('Image shape:', image.shape)
-        # print('Mask shape:', mask.shape)
+        image = self.__getitem__(idx) # [C, H, W]
 
         # Convert the torch.tensor image to PIL for easy visualization
         image = to_pil_image(image)
@@ -248,7 +240,7 @@ def get_video_segmentation_loaders(params = Params()):
 
     return train_loader, val_loader
 
-def get_hidden_set_loader(params = Params(), reconstructed_img_dir = None):
+def get_hidden_set_loader(params = Params()):
     """
     Returns the data loader for the hidden set.
     
@@ -264,10 +256,11 @@ def get_hidden_set_loader(params = Params(), reconstructed_img_dir = None):
     data_dir = params.data_dir
     num_workers = params.num_workers
     pin_memory = params.pin_memory
+    reconstructed_img_dir = params.reconstructed_img_dir
 
     hidden_set_transforms = HiddenSetTransforms()
 
-    hidden_set_data = HiddenDataSet(data_dir, params, hidden_set_transforms, reconstructed_img_dir)
+    hidden_set_data = HiddenDataSet(data_dir, reconstructed_img_dir, params, hidden_set_transforms)
     hidden_set_loader = torch.utils.data.DataLoader(hidden_set_data, batch_size=1, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
 
     return hidden_set_loader
