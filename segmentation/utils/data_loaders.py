@@ -146,7 +146,7 @@ class HiddenDataSet(Dataset):
                 
                 video_folder_path = os.path.join(self.root_dir, video_folder)
                 frame_path = os.path.join(video_folder_path, f'image_10.png')
-                ``
+
                 self.data.append(frame_path)
         else:
 
