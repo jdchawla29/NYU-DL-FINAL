@@ -19,7 +19,7 @@ class VideoSegmentationData(Dataset):
     """
     Returns one frame and its corresponding mask at a time for each video in the training or validation set.
     """
-    def __init__(self, data_dir, split, params = Params(), transforms = None, subset = 1):
+    def __init__(self, data_dir, split, params = Params(), transforms = None, subset = 1, get_last_frame_only = False):
         assert split in ['train', 'val'], 'Invalid type. Must be either train or validation.'
         self.root_dir = os.path.join(data_dir, split)
         self.split = split
@@ -30,6 +30,7 @@ class VideoSegmentationData(Dataset):
         self.subset = subset # what percentage of the data to return 
 
         self.random_state = params.random_state
+        self.get_last_frame_only = get_last_frame_only
 
         self._load_data()
 
@@ -50,6 +51,10 @@ class VideoSegmentationData(Dataset):
             # Read video frames and masks
             for i in range(22):
                 frame_path = os.path.join(video_folder_path, f'image_{i}.png')
+
+                if self.get_last_frame_only:
+                    if i != 21:
+                        continue
 
                 try:
                     self.data.append((frame_path, mask[i]))
@@ -149,9 +154,6 @@ class HiddenDataSet(Dataset):
                 all_images.extend(images)
 
             self.data = [[image] for image in all_images]
-
-            # turn off the transforms -> should probably change this code at some point
-            self.transforms = None
         
         else:
             range_start = 21
@@ -186,6 +188,29 @@ class HiddenDataSet(Dataset):
 
         return images
 
+    def visualize_example(self, idx):
+        """
+        Visualize a specific training example and its corresponding label.
+        
+        Args:
+            idx (int): The index of the example to visualize.
+        """
+
+        image = self.__getitem__(idx)[0] # [1, C, H, W] -> [C, H, W]
+
+        # print('Image shape:', image.shape)
+        # print('Mask shape:', mask.shape)
+
+        # Convert the torch.tensor image to PIL for easy visualization
+        image = to_pil_image(image)
+
+        # Plotting
+        _, ax = plt.subplots(1, 1, figsize=(6, 6))
+        ax.imshow(image)
+        ax.set_title('Hidden Set Image')
+        ax.axis('off')
+        
+        plt.show()
 
 
 def get_video_segmentation_loaders(params = Params()):

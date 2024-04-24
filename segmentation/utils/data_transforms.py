@@ -100,9 +100,9 @@ class HiddenSetTransforms:
         """
 
         image_transforms = v2.Compose([
-            v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1]
-            # v2.Lambda(lambda X: 2 * X - 1.0),  # rescale to [-1, 1]
-            # v2.Resize(params.resolution, interpolation=InterpolationMode.BICUBIC), # Resize the image to the specified resolution
+            v2.CenterCrop((80,120)), 
+            v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1] since thats what the model expects
+            v2.Resize((160, 240),interpolation=v2.InterpolationMode.BICUBIC,antialias=True) 
         ])
 
 
