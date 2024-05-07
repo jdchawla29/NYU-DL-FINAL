@@ -1,12 +1,11 @@
 Env:
-    output_dir: '/teamspace/studios/this_studio/out/trained' # output directory
+    output_dir: 'NYU-DL-FINAL/out/trained' # output directory
     logger: 'tensorboard'
-    resume_ckpt: '/teamspace/studios/this_studio/out/trained/checkpoint-45000'
-    stdiff_init_ckpt: '/teamspace/studios/this_studio/trained/stdiff'
+    resume_ckpt: none
+    stdiff_init_ckpt: none
     
 Dataset:
-    name: 'Object-Data'
-    dir: '/teamspace/studios/this_studio/NYU-DL-FINAL/dataset/val' # path to the dataset
+    dir: 'NYU-DL-FINAL/dataset/val' # path to the dataset
     stage: 'inference' # 'train' or 'inference'
     batch_size: 2 # 64 for testing
     num_workers: 8
@@ -78,7 +77,7 @@ Training:
     gradient_accumulation_steps: 1 # 4 for 128 resolution, 4 GPU training
 
 TestCfg:
-    ckpt_path: '/teamspace/studios/this_studio/out/trained'
-    test_results_path: '/teamspace/studios/this_studio/out/results'
+    ckpt_path: 'NYU-DL-FINAL/out/trained'
+    test_results_path: 'NYU-DL-FINAL/out/results'
     scheduler: 
         sample_steps: 100

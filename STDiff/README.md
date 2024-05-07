@@ -1,1 +1,0 @@
-Code from [this fork](https://github.com/jdchawla29/STDiffProject)
