@@ -8,15 +8,16 @@ from tqdm import tqdm
 # torch imports
 import torch
 from torchmetrics import JaccardIndex as IoU
-from torchmetrics.functional.classification import dice
 from torch.optim import Adam
 import torch.nn.functional as F
 
 # local imports
 from utils.params import Params
+from utils.data_transforms import ValSegmentationTransforms, TrainSegmentationTransforms
+from torchvision.transforms import v2, InterpolationMode
+from utils.data_loaders import VideoSegmentationData
 from utils.visualize import visualize_predicted_example
 from models.unet import UNet
-from utils.data_loaders import get_video_segmentation_loaders
 
 @torch.inference_mode()
 def visualize_example(data_loader, model, split, device, epoch, params = Params()): 
@@ -54,20 +55,6 @@ def calculate_iou(pred_masks, true_masks, num_classes, device):
 
     return IoU_metric
 
-# NEED TO FIX - DOES NOT WORK RIGHT NOW
-def calculate_dice_loss(pred_masks, true_masks, num_classes):
-
-    # Apply softmax to masks_pred to get probabilities
-    masks_pred_softmax = F.softmax(pred_masks, dim=1)
-
-    # Convert true_masks to one-hot encoding
-    true_masks_one_hot = F.one_hot(true_masks, num_classes=num_classes)
-    true_masks_one_hot = true_masks_one_hot.permute(0, 3, 1, 2) # from [batch_size, H, W] to [batch_size, num_classes, H, W]
-
-    # Calculate the dice loss
-    dice_loss = dice(masks_pred_softmax, true_masks_one_hot, num_classes=num_classes)
-
-    return dice_loss  
 
 @torch.inference_mode()
 def validate(model, val_loader, criterion, device, params = Params()):
@@ -107,7 +94,7 @@ def train(model, train_loader, val_loader, criterion, optimizer, device, params 
         
         # create the checkpoint directory for this run with the current timestamp
         checkpoint_dir = os.path.join(params.checkpoint_path, str(datetime.now()).replace(" ", "_").replace(":", "_").replace(".", "_"))
-        os.makedirs(checkpoint_dir)
+        os.makedirs(checkpoint_dir, exist_ok = True)
 
         # update the checkpoint path in the params object
         params.checkpoint_dir = checkpoint_dir
@@ -184,7 +171,39 @@ def train(model, train_loader, val_loader, criterion, optimizer, device, params 
             print()
 
     print("Training complete")
-    
+
+class BlurredTransforms:
+    """
+    Class for applying transforms.
+    """
+
+    def __call__(self, image, mask, params = Params()):
+        """
+        Apply transforms to the image and mask.
+
+        Args:
+            image (Tensor): Image tensor.
+            mask (Tensor): Mask tensor.
+            params (Params): Parameters for the transforms.
+        """
+
+        image_transforms = v2.Compose([ 
+            v2.Resize((80, 120),interpolation=v2.InterpolationMode.BICUBIC,antialias=True), 
+            v2.Pad((4,24,4,24)), 
+            v2.CenterCrop((80,120)), 
+            v2.ToDtype(params.frame_dtype, scale=True), # Convert the image to a PyTorch Tensor and scale pixel values to [0, 1] since thats what the model expects
+            v2.Resize((160, 240),interpolation=v2.InterpolationMode.BICUBIC,antialias=True) 
+        ])
+
+        mask_transforms = v2.Compose([
+            v2.ToDtype(params.mask_dtype), # Convert the mask to a PyTorch Tensor
+            v2.Resize(params.resolution, interpolation=InterpolationMode.NEAREST_EXACT), # Resize the mask to the specified resolution
+        ])
+
+        image = image_transforms(image)
+        mask = mask_transforms(mask)
+
+        return image, mask
 
 def main():
     
@@ -205,7 +224,25 @@ def main():
     criterion = torch.nn.CrossEntropyLoss()
 
     # Load the data
-    train_dataloader, val_dataloader = get_video_segmentation_loaders(params)
+    data_dir = params.data_dir
+    batch_size = params.batch_size
+    num_workers = params.num_workers
+    train_subset = params.train_subset
+    val_subset = params.val_subset
+    val_subset = params.val_subset
+    pin_memory = params.pin_memory
+
+    train_weird_transforms = BlurredTransforms()
+    train_weird_data = VideoSegmentationData(data_dir, 'train', params, train_weird_transforms, train_subset)
+
+    train_transforms = TrainSegmentationTransforms()
+    val_transforms = ValSegmentationTransforms()
+
+    train_data = VideoSegmentationData(data_dir, 'train', params, train_transforms, train_subset)
+    val_data = VideoSegmentationData(data_dir, 'val', params, val_transforms, val_subset)
+
+    train_dataloader = torch.utils.data.DataLoader(torch.utils.data.ConcatDataset([train_data, train_weird_data]), batch_size=batch_size * 2, shuffle=True, num_workers=num_workers, pin_memory=pin_memory)
+    val_dataloader = torch.utils.data.DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
 
     # Train the model
     train(model, train_dataloader, val_dataloader, criterion, optimizer, device, params)
