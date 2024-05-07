@@ -27,3 +27,11 @@ python hidden_set_inference.py --model_path [/path/to/best__segmentation_model.p
 ```
 
 This will add a folder called hidden_set_masks to the checkpoints folder where you got the best_model.pth from, which will contain 5 example images (the image + the corresponding predicted mask). It will also have a file called all_hidden_set_masks.tensor which contains all 5000 predicted segmentation masks.
+
+You will need a different conda environment for the segmentation model and the reconstruction model. Run the following commands to create a conda environment for training and testing the UNet model.
+
+```
+conda create -n segmentation python=3.11
+conda activate seg
+conda install matplotlib tqdm pytorch torchvision torchaudio torchmetrics jupyter pytorch-cuda=11.8 -c pytorch -c nvidia -y
+```
